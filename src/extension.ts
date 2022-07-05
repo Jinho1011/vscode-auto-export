@@ -1,26 +1,36 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import { commands, ExtensionContext, Uri, window, workspace } from 'vscode';
+import Scanner from './scanner';
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-	
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "auto-export-js" is now active!');
+export function activate(context: ExtensionContext) {
+  context.subscriptions.push(
+    commands.registerCommand('auto-export-js.exportAll', () =>
+      console.log('Export All var/func')
+    )
+  );
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('auto-export-js.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from auto export js!');
-	});
+  context.subscriptions.push(
+    commands.registerCommand('auto-export-js.test', () => {
+      const editor = window.activeTextEditor;
 
-	context.subscriptions.push(disposable);
+      if (editor) {
+        const document = editor.document.getText();
+        const sc = new Scanner(document);
+
+        const varNames = sc.getVariableNames();
+        window.showInformationMessage(varNames[0]);
+
+        // editor.edit((editBuilder) => {
+        //   editBuilder.replace(selection, reversed);
+        // });
+      } else {
+        window.showInformationMessage('Cannot find and document');
+      }
+    })
+  );
 }
 
-// this method is called when your extension is deactivated
-export function deactivate() {}
+// string = /* eslint-disable react-hooks/rules-of-hooks */ /* eslint-disable @typescript-eslint/no-var-requires */ const path = require('path'); const { override, getBabelLoader } = require('customize-cra'); module.exports = override(removeBuiltinBabelConfig, enableBabelConfig); function removeBuiltinBabelConfig(config) { const loader = getBabelLoader(config); loader.options.presets = []; loader.options.plugins = []; return config; } function enableBabelConfig(config) { const loader = getBabelLoader(config); loader.options.configFile = path.resolve(__dirname, 'babel.config.js'); return config; }
+
+export function handleError(error: Error) {
+  window.showErrorMessage(error.message);
+}
