@@ -1,11 +1,12 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import scanner from '../../scanner';
+import Parser from '../../parser';
 
 const document = `
 	import styled from '@emotion/styled'; // ImportDeclaration
 
 	const BigText = 123 // VariableDeclaration
+	const Text1 = '123', Text2 = '456';
 	let var2 = "asfc" // VariableDeclaration
 	export var var3 = {} // ExportNamedDeclaration
 	const func2 = () => console.log(1) // VariableDeclaration
@@ -24,8 +25,10 @@ suite('Extension Test Suite', () => {
 
 	test('@babel/parser test', () => {
 		vscode.window.createInputBox();
-		const nodes = scanner(document);
-		console.log('🚀 ~ file: extension.test.ts ~ line 23 ~ test ~ nodes', nodes);
+		const parser = new Parser(document);
+		const declarationStatements = parser.getExportableStatements(parser._statements);
+		console.log(JSON.stringify(declarationStatements, null, 4));
+		// const exportStatement = parser.getExportStatement(exportableStatements, 'named');
 
 
 
