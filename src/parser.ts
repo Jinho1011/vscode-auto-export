@@ -1,25 +1,52 @@
-import { parse } from "@babel/parser";
+import { parse } from '@babel/parser';
 import {
-  BlockStatement,
   Declaration,
-  FunctionDeclaration,
+  DeclareExportAllDeclaration,
+  DeclareExportDeclaration,
+  DeclareModule,
+  DeclareModuleExports,
+  Identifier,
   ModuleDeclaration,
   Statement,
-  TSInterfaceDeclaration,
-  TSTypeAliasDeclaration,
-  VariableDeclaration,
-} from "@babel/types";
+  TSModuleDeclaration,
+} from '@babel/types';
 
-const EXPORTABLE_TYPES = [
-  "VariableDeclaration",
-  "FunctionDeclaration",
-  // "TSInterfaceDeclaration",
-  // "TSTypeAliasDeclaration",
-];
-
-type ExportableDeclaration = Exclude<Declaration, ModuleDeclaration>;
+type ExportableDeclaration = Exclude<
+  Declaration,
+  | ModuleDeclaration
+  | TSModuleDeclaration
+  | DeclareModule
+  | DeclareExportDeclaration
+  | DeclareExportAllDeclaration
+  | DeclareModuleExports
+>;
 
 export default class Parser {
+  exportableDeclarations = [
+    'FunctionDeclaration',
+    'VariableDeclaration',
+    'ClassDeclaration',
+    'DeclareClass',
+    'DeclareFunction',
+    'DeclareInterface',
+    'DeclareTypeAlias',
+    'DeclareOpaqueType',
+    'DeclareVariable',
+    'InterfaceDeclaration',
+    'OpaqueType',
+    'TypeAlias',
+    'EnumDeclaration',
+    'TSDeclareFunction',
+    'TSInterfaceDeclaration',
+    'TSTypeAliasDeclaration',
+    'TSEnumDeclaration',
+    // "TSModuleDeclaration",
+    // "DeclareModule",
+    // "DeclareExportDeclaration",
+    // "DeclareExportAllDeclaration",
+    // "DeclareModuleExports",
+  ];
+
   _document: string;
   _statements: Statement[];
 
@@ -30,47 +57,33 @@ export default class Parser {
 
   getStatements(document: string): Statement[] {
     const parsed = parse(document, {
-      sourceType: "unambiguous",
-      plugins: ["typescript"],
+      sourceType: 'unambiguous',
+      plugins: ['typescript'],
     });
     return parsed.program.body;
   }
 
-  isDeclaration(statement: Statement): statement is ExportableDeclaration {
-    // return (statement as ExportableDeclaration).type
-  }
-
   getExportableStatements(statements: Statement[]) {
-    // filter Declaration from Statement
-    return statements.filter(this.isDeclaration);
+    return statements.filter((statement): statement is ExportableDeclaration =>
+      this.exportableDeclarations.includes(statement.type)
+    );
   }
 
-  // getExportStatement(
-  //   statements: Exclude<Statement, BlockStatement>[],
-  //   type: "named" | "default"
-  // ) {
-  //   // let exportStatement = `export {${statements.map(statement => statement.)}}`;
-  //   statements
-  //     .map((statement) => {
-  //       return statement.declaration.map((v) => v.id.name);
-  //     })
-  //     .flatMap();
-  // }
+  getVariableName(node: ExportableDeclaration): string {
+    if (node.type === 'VariableDeclaration') {
+      return node.declarations
+        .map((declaration) => (declaration.id as Identifier).name)
+        .join(', ');
+    } else {
+      return node.id!.name;
+    }
+  }
+
+  getVariablesName(nodes: ExportableDeclaration[]) {
+    return [...new Set(nodes.map((node) => this.getVariableName(node)))];
+  }
+
+  getNamedExportStatement(names: string[]) {
+    return `export { ${names.join(', ')} }`;
+  }
 }
-
-// const EXPORTABLE_TYPES = ['VariableDeclaration','FunctionDeclaration', 'TSInterfaceDeclaration', 'TSTypeAliasDeclaration'];
-
-// export default (document: string) => {
-//   const parsed = parse(document, { sourceType: "unambiguous", plugins:["typescript"] });
-//   const nodes = parsed.program.body;
-//   const exportableVariables = nodes.filter(node => node.type);
-//   return exportableVariables;
-// };
-
-// const getNodes = () => {
-
-// };
-
-// const getExportableVariables = () => {
-
-// };
