@@ -29,14 +29,13 @@ export function activate(context: ExtensionContext) {
         const fullRange = document.validateRange(invalidRange);
 
         const parser: Parser = new Parser(textDocument);
-
         const declarationStatements = parser.getExportableStatements();
-        const names = parser.getVariablesName(declarationStatements);
-        const exportStatement = parser.getNamedExportStatement(names);
 
-        const existedNamedExports = parser.getExportNamedDeclarations();
+        if (declarationStatements.length) {
+          const names = parser.getVariablesName(declarationStatements);
+          const exportStatement = parser.getNamedExportStatement(names);
+          const existedNamedExports = parser.getExportNamedDeclarations();
 
-        if (true) {
           editor.edit((editBuilder) => {
             if (existedNamedExports.length) {
               existedNamedExports.map((existedNamedExport, i) => {
@@ -64,6 +63,8 @@ export function activate(context: ExtensionContext) {
               exportStatement
             );
           });
+        } else {
+          window.showInformationMessage('Cannot find exportable variables.');
         }
       } else {
         window.showInformationMessage('Cannot find and document');
