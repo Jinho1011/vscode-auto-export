@@ -5,6 +5,7 @@ import {
   DeclareExportDeclaration,
   DeclareModule,
   DeclareModuleExports,
+  ExportDefaultDeclaration,
   ExportNamedDeclaration,
   Identifier,
   ModuleDeclaration,
@@ -13,8 +14,7 @@ import {
 } from '@babel/types';
 
 /**
- * Description placeholder
- * @date 10/8/2022 - 11:13:21 PM
+ * Define Exportable Declarations with `@babel/types`
  *
  * @typedef {ExportableDeclaration}
  */
@@ -33,8 +33,7 @@ type ExportableDeclaration = Exclude<
  */
 export default class Parser {
   /**
-   * Description placeholder
-   * @date 10/8/2022 - 11:13:21 PM
+   * Define all exportable declaration types
    *
    * @readonly
    * @type {{}}
@@ -65,15 +64,16 @@ export default class Parser {
   ];
 
   /**
-   * Description placeholder
+   * Target document to parse with `@babel/parse`
    * @date 10/8/2022 - 11:13:21 PM
    *
    * @readonly
    * @type {string}
    */
   readonly _document: string;
+
   /**
-   * Description placeholder
+   * An Array of Statement
    * @date 10/8/2022 - 11:13:21 PM
    *
    * @readonly
@@ -83,7 +83,6 @@ export default class Parser {
 
   /**
    * Creates an instance of Parser.
-   * @date 10/8/2022 - 11:13:21 PM
    *
    * @constructor
    * @param {string} document
@@ -102,7 +101,7 @@ export default class Parser {
   getStatements(document: string): Statement[] {
     const parsed = parse(document, {
       sourceType: 'unambiguous',
-      plugins: ['typescript'],
+      plugins: ['typescript', 'jsx'],
     });
     return parsed.program.body;
   }
@@ -126,10 +125,12 @@ export default class Parser {
   }
 
   /**
-   * Description placeholder
-   * @date 10/8/2022 - 11:13:21 PM
+   * Find Named Exported Declaration that has specifiers
    *
-   * @returns {*}
+   * @example
+   * export { foo, bar }
+   *
+   * @returns An Array of ExportNamedDeclaration
    */
   getExportNamedDeclarations() {
     return this._statements.filter(
@@ -141,27 +142,23 @@ export default class Parser {
   }
 
   /**
-   * Description placeholder
-   * @date 10/8/2022 - 11:13:21 PM
+   * Find Default Exported Declaration
    *
-   * @returns {*}
+   * @example
+   * export default foo
+   *
+   * @returns An ExportDefaultDeclaration if exists.
+   * Otherwise, it will return undefined
    */
-  getNamedExportedVariables() {
-    const exportedVariables = this.getExportNamedDeclarations();
-
-    return exportedVariables
-      .filter((exportedVariable) => exportedVariable.declaration)
-      .map((exportedVariable) =>
-        this.getVariableName(
-          exportedVariable.declaration as ExportableDeclaration
-        )
-      )
-      .flat();
+  getExportDefaultDeclaration(): ExportDefaultDeclaration | undefined {
+    return this._statements.filter(
+      (statement): statement is ExportDefaultDeclaration =>
+        statement.type === 'ExportDefaultDeclaration'
+    )[0];
   }
 
   /**
-   * Description placeholder
-   * @date 10/8/2022 - 11:13:21 PM
+   * Find exportable variables in array of statement
    *
    * @returns {ExportableDeclaration[]}
    */
@@ -173,24 +170,50 @@ export default class Parser {
   }
 
   /**
-   * Description placeholder
-   * @date 10/8/2022 - 11:13:21 PM
+   * Get name of variable/function for the given declarations
    *
-   * @param {ExportableDeclaration[]} nodes
-   * @returns {{}}
+   * @param {ExportableDeclaration[]} declarations
+   *
+   * @return An array of string because of multiple variables declaration
+   *
+   * @example
+   * let foo, bar; // -> ['foo', 'bar']
+   * let baz; // -> ['baz']
    */
-  getVariablesName(nodes: ExportableDeclaration[]) {
-    return [...new Set(nodes.map((node) => this.getVariableName(node)).flat())];
+  getVariablesName(declarations: ExportableDeclaration[]) {
+    return [
+      ...new Set(
+        declarations
+          .map((declaration) => this.getVariableName(declaration))
+          .flat()
+      ),
+    ];
   }
 
   /**
-   * Description placeholder
-   * @date 10/8/2022 - 11:13:21 PM
+   * Get export statement for the given array of ExportableDeclaration
    *
-   * @param {string[]} names
-   * @returns {string}
+   * @param {ExportableDeclaration[]} declarations
+   *
+   * @return A string of export statement.
+   * If the variable name exported as default is included, exclude it and generate an export statement.
    */
-  getNamedExportStatement(names: string[]) {
+  getNamedExportStatement(declarations: ExportableDeclaration[]) {
+    const existedDefaultExport = this.getExportDefaultDeclaration();
+    const names = this.getVariablesName(declarations);
+
+    /**
+     * exclude default exported variable from export statement
+     */
+    if (existedDefaultExport) {
+      return `export { ${names
+        .filter(
+          (name) =>
+            name !== (existedDefaultExport.declaration as Identifier).name
+        )
+        .join(', ')} }`;
+    }
+
     return `export { ${names.join(', ')} }`;
   }
 }
