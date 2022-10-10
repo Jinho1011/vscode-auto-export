@@ -2,7 +2,7 @@
   "name": "auto-export-js",
   "displayName": "Auto Export",
   "description": "Automatically find exportable code and generate export statement. Works with Typescript and TSX",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "jinho1011",
   "license": "MIT",
   "icon": "images/icon.png",
