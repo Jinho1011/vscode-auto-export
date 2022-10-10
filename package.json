@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "publisher": "jinho1011",
   "license": "MIT",
-  "icon": "images/logo.png",
+  "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.68.0"
   },
