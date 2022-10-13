@@ -5,29 +5,29 @@ import {
   Range,
   TextEditor,
   window,
-} from 'vscode';
-import Parser from './parser';
+} from 'vscode'
+import Parser from './parser'
 
 export function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand('auto-export-js.exportAllAsNamed', () => {
-      const editor: TextEditor | undefined = window.activeTextEditor;
+      const editor: TextEditor | undefined = window.activeTextEditor
 
       if (editor) {
-        const document = editor.document;
-        const textDocument = document.getText();
+        const document = editor.document
+        const textDocument = document.getText()
         const documentRange = document.validateRange(
-          new Range(0, 0, document.lineCount, 0)
-        );
+          new Range(0, 0, document.lineCount, 0),
+        )
 
         try {
-          const parser: Parser = new Parser(textDocument);
-          const exportableStatements = parser.getExportableStatements();
+          const parser: Parser = new Parser(textDocument)
+          const exportableStatements = parser.getExportableStatements()
 
           if (exportableStatements.length) {
-            const existedNamedExports = parser.getExportNamedDeclarations();
+            const existedNamedExports = parser.getExportNamedDeclarations()
             const exportStatement =
-              parser.getNamedExportStatement(exportableStatements);
+              parser.getNamedExportStatement(exportableStatements)
 
             editor.edit((editBuilder) => {
               /**
@@ -37,14 +37,14 @@ export function activate(context: ExtensionContext) {
                 existedNamedExports.map((existedNamedExport, i) => {
                   const startPosition = new Position(
                     existedNamedExport.loc!.start.line - 1,
-                    existedNamedExport.loc!.start.column
-                  );
+                    existedNamedExport.loc!.start.column,
+                  )
                   const endPosition = new Position(
                     existedNamedExport.loc!.end.line,
-                    0
-                  );
-                  editBuilder.delete(new Range(startPosition, endPosition));
-                });
+                    0,
+                  )
+                  editBuilder.delete(new Range(startPosition, endPosition))
+                })
               }
               /**
                * inserts export statement at the end of the document
@@ -52,20 +52,20 @@ export function activate(context: ExtensionContext) {
               editBuilder.insert(
                 new Position(
                   documentRange.end.line,
-                  documentRange.end.character
+                  documentRange.end.character,
                 ),
-                '\n' + exportStatement
-              );
-            });
+                '\n' + exportStatement,
+              )
+            })
           } else {
-            window.showInformationMessage('Cannot find exportable statement.');
+            window.showInformationMessage('Cannot find exportable statement.')
           }
         } catch (e) {
-          window.showInformationMessage('Cannot parse current document.');
+          window.showInformationMessage('Cannot parse current document.')
         }
       } else {
-        window.showInformationMessage('Cannot find and document.');
+        window.showInformationMessage('Cannot find and document.')
       }
-    })
-  );
+    }),
+  )
 }

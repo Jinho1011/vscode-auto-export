@@ -1,4 +1,4 @@
-import { parse } from '@babel/parser';
+import { parse } from '@babel/parser'
 import {
   Declaration,
   DeclareExportAllDeclaration,
@@ -11,7 +11,7 @@ import {
   ModuleDeclaration,
   Statement,
   TSModuleDeclaration,
-} from '@babel/types';
+} from '@babel/types'
 
 /**
  * Define Exportable Declarations with `@babel/types`
@@ -26,7 +26,7 @@ type ExportableDeclaration = Exclude<
   | DeclareExportDeclaration
   | DeclareExportAllDeclaration
   | DeclareModuleExports
->;
+>
 
 /**
  * A parser parses the provided document as an entire ECMAScript program.
@@ -61,7 +61,12 @@ export default class Parser {
     // "DeclareExportDeclaration",
     // "DeclareExportAllDeclaration",
     // "DeclareModuleExports",
-  ];
+  ]
+
+  readonly exportableTypes = [
+    'TSInterfaceDeclaration',
+    'TSTypeAliasDeclaration',
+  ]
 
   /**
    * Target document to parse with `@babel/parse`
@@ -70,7 +75,7 @@ export default class Parser {
    * @readonly
    * @type {string}
    */
-  readonly _document: string;
+  readonly _document: string
 
   /**
    * An Array of Statement
@@ -79,7 +84,7 @@ export default class Parser {
    * @readonly
    * @type {Statement[]}
    */
-  readonly _statements: Statement[];
+  readonly _statements: Statement[]
 
   /**
    * Creates an instance of Parser.
@@ -88,8 +93,8 @@ export default class Parser {
    * @param {string} document
    */
   constructor(document: string) {
-    this._document = document;
-    this._statements = this.getStatements(this._document);
+    this._document = document
+    this._statements = this.getStatements(this._document)
   }
 
   /**
@@ -102,8 +107,8 @@ export default class Parser {
     const parsed = parse(document, {
       sourceType: 'unambiguous',
       plugins: ['typescript', 'jsx'],
-    });
-    return parsed.program.body;
+    })
+    return parsed.program.body
   }
 
   /**
@@ -117,10 +122,10 @@ export default class Parser {
   getVariableName(node: ExportableDeclaration): string | string[] {
     if (node.type === 'VariableDeclaration') {
       return node.declarations.map(
-        (declaration) => (declaration.id as Identifier).name
-      );
+        (declaration) => (declaration.id as Identifier).name,
+      )
     } else {
-      return node.id!.name;
+      return node.id!.name
     }
   }
 
@@ -137,8 +142,8 @@ export default class Parser {
       (statement): statement is ExportNamedDeclaration =>
         statement.type === 'ExportNamedDeclaration' &&
         statement.declaration === null &&
-        statement.specifiers.length > 0
-    );
+        statement.specifiers.length > 0,
+    )
   }
 
   /**
@@ -153,8 +158,8 @@ export default class Parser {
   getExportDefaultDeclaration(): ExportDefaultDeclaration | undefined {
     return this._statements.filter(
       (statement): statement is ExportDefaultDeclaration =>
-        statement.type === 'ExportDefaultDeclaration'
-    )[0];
+        statement.type === 'ExportDefaultDeclaration',
+    )[0]
   }
 
   /**
@@ -164,9 +169,18 @@ export default class Parser {
    */
   getExportableStatements(): ExportableDeclaration[] {
     return this._statements.filter(
+      (statement): statement is ExportableDeclaration => {
+        console.log(statement)
+        return this.exportableDeclarations.includes(statement.type)
+      },
+    )
+  }
+
+  getExportableVariables() {
+    return this._statements.filter(
       (statement): statement is ExportableDeclaration =>
-        this.exportableDeclarations.includes(statement.type)
-    );
+        this.exportableDeclarations.includes(statement.type),
+    )
   }
 
   /**
@@ -185,9 +199,9 @@ export default class Parser {
       ...new Set(
         declarations
           .map((declaration) => this.getVariableName(declaration))
-          .flat()
+          .flat(),
       ),
-    ];
+    ]
   }
 
   /**
@@ -199,8 +213,8 @@ export default class Parser {
    * If the variable name exported as default is included, exclude it and generate an export statement.
    */
   getNamedExportStatement(declarations: ExportableDeclaration[]) {
-    const existedDefaultExport = this.getExportDefaultDeclaration();
-    const names = this.getVariablesName(declarations);
+    const existedDefaultExport = this.getExportDefaultDeclaration()
+    const names = this.getVariablesName(declarations)
 
     /**
      * exclude default exported variable from export statement
@@ -209,11 +223,11 @@ export default class Parser {
       return `export { ${names
         .filter(
           (name) =>
-            name !== (existedDefaultExport.declaration as Identifier).name
+            name !== (existedDefaultExport.declaration as Identifier).name,
         )
-        .join(', ')} }`;
+        .join(', ')} }`
     }
 
-    return `export { ${names.join(', ')} }`;
+    return `export { ${names.join(', ')} }`
   }
 }
