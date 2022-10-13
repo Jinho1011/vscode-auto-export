@@ -19,4 +19,4 @@ export { var1, var2, var3, var4 };
 
 ## TODO
 
-- [ ] export type/interface as `export type {}`
+- [ ] Support Type-Only Export
