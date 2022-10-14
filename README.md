@@ -19,4 +19,4 @@ export { var1, var2, var3, var4 }
 
 ## TODO
 
-- [ ] Support Type-Only Export
+- [x] Support Type-Only Export
