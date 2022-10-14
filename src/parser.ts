@@ -13,6 +13,11 @@ import {
   TSModuleDeclaration,
 } from '@babel/types'
 
+export interface ExportKind {
+  name: string | string[]
+  exportKind: string
+}
+
 /**
  * Define Exportable Declarations with `@babel/types`
  *
@@ -170,7 +175,6 @@ export default class Parser {
   getExportableStatements(): ExportableDeclaration[] {
     return this._statements.filter(
       (statement): statement is ExportableDeclaration => {
-        console.log(statement)
         return this.exportableDeclarations.includes(statement.type)
       },
     )
@@ -205,6 +209,18 @@ export default class Parser {
   }
 
   /**
+   * Return true if the given declaration is includes in exportableTypes
+   * Otherwise return false
+   *
+   * @param declaration
+   *
+   * @returns Boolean
+   */
+  isTypeDeclaration(declaration: ExportableDeclaration) {
+    return this.exportableTypes.includes(declaration.type)
+  }
+
+  /**
    * Get export statement for the given array of ExportableDeclaration
    *
    * @param {ExportableDeclaration[]} declarations
@@ -212,22 +228,20 @@ export default class Parser {
    * @return A string of export statement.
    * If the variable name exported as default is included, exclude it and generate an export statement.
    */
-  getNamedExportStatement(declarations: ExportableDeclaration[]) {
+  getNamedExportStatement(declarations: ExportableDeclaration[]): ExportKind[] {
     const existedDefaultExport = this.getExportDefaultDeclaration()
-    const names = this.getVariablesName(declarations)
 
-    /**
-     * exclude default exported variable from export statement
-     */
-    if (existedDefaultExport) {
-      return `export { ${names
-        .filter(
-          (name) =>
-            name !== (existedDefaultExport.declaration as Identifier).name,
-        )
-        .join(', ')} }`
-    }
+    const existedDefaultExportName = existedDefaultExport
+      ? (existedDefaultExport.declaration as Identifier).name
+      : ''
 
-    return `export { ${names.join(', ')} }`
+    return declarations
+      .map((declaration) => {
+        return {
+          name: this.getVariableName(declaration),
+          exportKind: this.isTypeDeclaration(declaration) ? 'type' : 'value',
+        }
+      })
+      .filter((declaration) => declaration.name !== existedDefaultExportName)
   }
 }

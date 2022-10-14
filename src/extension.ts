@@ -6,7 +6,7 @@ import {
   TextEditor,
   window,
 } from 'vscode'
-import Parser from './parser'
+import Parser, { ExportKind } from './parser'
 
 export function activate(context: ExtensionContext) {
   context.subscriptions.push(
@@ -26,8 +26,23 @@ export function activate(context: ExtensionContext) {
 
           if (exportableStatements.length) {
             const existedNamedExports = parser.getExportNamedDeclarations()
-            const exportStatement =
+            const exportNames =
               parser.getNamedExportStatement(exportableStatements)
+
+            const filterKind = (v: ExportKind[], kind: 'value' | 'type') =>
+              v
+                .filter((v) => v.exportKind === kind)
+                .map((v) => v.name)
+                .flat()
+
+            const valueKindNames = filterKind(exportNames, 'value')
+            const valueExportStatement = valueKindNames.length
+              ? `export { ${valueKindNames.join(', ')} }`
+              : ''
+            const typeKindNames = filterKind(exportNames, 'type')
+            const typeExportStatement = typeKindNames.length
+              ? `\nexport type { ${typeKindNames.join(', ')} }`
+              : ''
 
             editor.edit((editBuilder) => {
               /**
@@ -54,7 +69,7 @@ export function activate(context: ExtensionContext) {
                   documentRange.end.line,
                   documentRange.end.character,
                 ),
-                '\n' + exportStatement,
+                '\n' + valueExportStatement + typeExportStatement,
               )
             })
           } else {
