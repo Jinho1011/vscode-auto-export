@@ -11,10 +11,10 @@ Automaically export javascript variables or functions. Works with JavaScript (ES
 ### Export All as Named
 
 ```javascript
-export { var1, var2, var3 };
+export { var1, var2, var3 }
 
-const var4 = ""; // Export All as Named
-export { var1, var2, var3, var4 };
+const var4 = '' // Export All as Named
+export { var1, var2, var3, var4 }
 ```
 
 ## TODO
